@@ -27,8 +27,8 @@ class CustomThemeHolder extends InheritedWidget {
   }
 
   static CustomThemeHolder of(BuildContext context) {
-    CustomThemeHolder inherited =
-        (context.dependOnInheritedWidgetOfExactType<CustomThemeHolder>())!;
+    //  / context.appColors.lessImportantColor;
+    CustomThemeHolder inherited = (context.dependOnInheritedWidgetOfExactType<CustomThemeHolder>())!;
     return inherited;
   }
 }

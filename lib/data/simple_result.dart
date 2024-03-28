@@ -39,15 +39,12 @@ class SimpleResult<SuccessType, FailureType> {
     return this;
   }
 
-  FutureOr<SimpleResult> runIfSuccessAsync(
-      FutureOr<void> Function(SuccessType data) function) async {
+  FutureOr<SimpleResult> runIfSuccessAsync(FutureOr<void> Function(SuccessType data) function) async {
     await _runSuccess(function);
     return this;
   }
 
-
-  FutureOr<SimpleResult> runIfFailureAsync(
-      FutureOr<void> Function(FailureType error) function) async {
+  FutureOr<SimpleResult> runIfFailureAsync(FutureOr<void> Function(FailureType error) function) async {
     await _runFailure(function);
     return this;
   }
@@ -76,7 +73,6 @@ class SimpleResult<SuccessType, FailureType> {
     }
   }
 
-
   Future<void> _runFailure(FutureOr<void> Function(FailureType error) function) async {
     if (isFailure) {
       if (!_isFailureDataExist) {
@@ -86,7 +82,6 @@ class SimpleResult<SuccessType, FailureType> {
       }
     }
   }
-
 
   // ignore: library_private_types_in_public_api
   static _Failure<SuccessType, FailureType> failure<SuccessType, FailureType>([FailureType? data]) {

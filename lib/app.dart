@@ -1,31 +1,42 @@
+import 'package:fast_app_base/auth.dart';
 import 'package:fast_app_base/common/common.dart';
+import 'package:fast_app_base/common/fcm/fcm_manager.dart';
+import 'package:fast_app_base/common/route/fade_transition_page.dart';
 import 'package:fast_app_base/common/theme/custom_theme_app.dart';
+import 'package:fast_app_base/common/widget/w_round_button.dart';
+import 'package:fast_app_base/entity/post/vo_simple_product_post.dart';
 import 'package:fast_app_base/screen/main/s_main.dart';
+import 'package:fast_app_base/screen/main/tab/tab_item.dart';
+import 'package:fast_app_base/screen/post_detail/s_post_detail.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import 'common/theme/custom_theme.dart';
 
-class App extends StatefulWidget {
+class App extends ConsumerStatefulWidget {
   static final GlobalKey<NavigatorState> navigatorKey = GlobalKey();
 
   ///light, dark 테마가 준비되었고, 시스템 테마를 따라가게 하려면 해당 필드를 제거 하시면 됩니다.
-  static const defaultTheme = CustomTheme.light;
+  static const defaultTheme = CustomTheme.dark;
   static bool isForeground = true;
 
   const App({super.key});
 
   @override
-  State<App> createState() => AppState();
+  ConsumerState<App> createState() => AppState();
 }
 
-class AppState extends State<App> with Nav, WidgetsBindingObserver {
-  @override
+class AppState extends ConsumerState<App> with WidgetsBindingObserver, Nav {
+  final DaangnAuth _auth = DaangnAuth();
+  final ValueKey<String> _scaffoldKey = const ValueKey<String>('App scaffold');
   GlobalKey<NavigatorState> get navigatorKey => App.navigatorKey;
-
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    FcmManager.requestPermistion();
+    FcmManager.initialize(ref);
   }
 
   @override
@@ -38,14 +49,18 @@ class AppState extends State<App> with Nav, WidgetsBindingObserver {
   Widget build(BuildContext context) {
     return CustomThemeApp(
       child: Builder(builder: (context) {
-        return MaterialApp(
-          navigatorKey: App.navigatorKey,
-          localizationsDelegates: context.localizationDelegates,
-          supportedLocales: context.supportedLocales,
-          locale: context.locale,
-          title: 'Image Finder',
-          theme: context.themeType.themeData,
-          home: const MainScreen(),
+        return DaangnAuthScope(
+          notifier: _auth,
+          child: MaterialApp.router(
+            routerConfig: _router,
+            //   navigatorKey: App.navigatorKey,
+            localizationsDelegates: context.localizationDelegates,
+            supportedLocales: context.supportedLocales,
+            locale: context.locale,
+            title: 'Image Finder',
+            theme: context.themeType.themeData,
+            //  home: const MainScreen(),
+          ),
         );
       }),
     );
@@ -69,4 +84,68 @@ class AppState extends State<App> with Nav, WidgetsBindingObserver {
     }
     super.didChangeAppLifecycleState(state);
   }
+
+  late final GoRouter _router = GoRouter(
+    navigatorKey: App.navigatorKey,
+    routes: <GoRoute>[
+      GoRoute(
+        path: '/',
+        redirect: (_, __) => '/main',
+      ),
+      GoRoute(
+        path: '/signin',
+        pageBuilder: (BuildContext context, GoRouterState state) => FadeTransitionPage(
+          key: state.pageKey,
+          child: Container(
+            color: Colors.green,
+            child: Center(
+              child: RoundButton(
+                text: '로그인',
+                onTap: () {
+                  _auth.signIn('hong', '1234');
+                },
+              ),
+            ),
+          ),
+        ),
+      ),
+      GoRoute(
+        path: '/main',
+        redirect: (_, __) => '/main/home',
+      ),
+      GoRoute(
+        path: '/productPost/:postId',
+        redirect: (BuildContext context, GoRouterState state) => '/main/home/${state.pathParameters['postId']}',
+      ),
+      GoRoute(
+        path: '/main/:kind(home|localLife|nearMy|chat|my)',
+        pageBuilder: (BuildContext context, GoRouterState state) => FadeTransitionPage(
+          key: _scaffoldKey,
+          child: MainScreen(
+            firstTab: TabItem.find(state.pathParameters['kind']),
+          ),
+        ),
+        routes: <GoRoute>[
+          GoRoute(
+            path: ':postId',
+            builder: (BuildContext context, GoRouterState state) {
+              final String postId = state.pathParameters['postId']!;
+              if (state.extra != null) {
+                final post = state.extra as SimpleProductPost;
+                return PostDetailScreen(
+                  int.parse(postId),
+                  simpleProductPost: post,
+                );
+              } else {
+                return PostDetailScreen(int.parse(postId));
+              }
+            },
+          ),
+        ],
+      ),
+    ],
+    redirect: _auth.guard,
+    refreshListenable: _auth,
+    debugLogDiagnostics: true,
+  );
 }

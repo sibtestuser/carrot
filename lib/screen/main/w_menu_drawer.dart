@@ -1,4 +1,5 @@
 import 'package:eva_icons_flutter/eva_icons_flutter.dart';
+import 'package:fast_app_base/common/theme/custom_theme.dart';
 import 'package:fast_app_base/screen/opensource/s_opensource.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -44,8 +45,7 @@ class _MenuDrawerState extends State<MenuDrawer> {
               width: 240,
               padding: const EdgeInsets.only(top: 10),
               decoration: BoxDecoration(
-                  borderRadius: const BorderRadius.only(
-                      topRight: Radius.circular(5), bottomRight: Radius.circular(5)),
+                  borderRadius: const BorderRadius.only(topRight: Radius.circular(5), bottomRight: Radius.circular(5)),
                   color: context.colors.background),
               child: isSmallScreen(context)
                   ? SingleChildScrollView(
@@ -59,8 +59,7 @@ class _MenuDrawerState extends State<MenuDrawer> {
     );
   }
 
-  bool isSmallScreen(BuildContext context) =>
-      context.deviceHeight < MenuDrawer.minHeightForScrollView;
+  bool isSmallScreen(BuildContext context) => context.deviceHeight < MenuDrawer.minHeightForScrollView;
 
   Container getMenus(BuildContext context) {
     return Container(
@@ -109,17 +108,38 @@ class _MenuDrawerState extends State<MenuDrawer> {
           isSmallScreen(context) ? const Height(10) : const EmptyExpanded(),
           MouseRegion(
             cursor: SystemMouseCursors.click,
-            child: ModeSwitch(
-              value: context.isDarkMode,
-              onChanged: (value) {
-                ThemeUtil.toggleTheme(context);
+            child: PopupMenuButton<CustomTheme>(
+              onSelected: (value) {
+                context.changeTheme(value);
               },
-              height: 30,
-              activeThumbImage: Image.asset('$basePath/darkmode/moon.png'),
-              inactiveThumbImage: Image.asset('$basePath/darkmode/sun.png'),
-              activeThumbColor: Colors.transparent,
-              inactiveThumbColor: Colors.transparent,
-            ).pOnly(left: 20),
+              itemBuilder: (context) {
+                return CustomTheme.values
+                    .map((e) => PopupMenuItem(
+                          value: e,
+                          child: Row(
+                            children: [
+                              CircleAvatar(
+                                backgroundColor: e.color,
+                              ),
+                              Text(e.name),
+                            ],
+                          ),
+                        ))
+                    .toList();
+              },
+              child: Text(context.themeType.name),
+            ),
+            // child: ModeSwitch(
+            //   value: context.isDarkMode,
+            //   onChanged: (value) {
+            //     ThemeUtil.toggleTheme(context);
+            //   },
+            //   height: 30,
+            //   activeThumbImage: Image.asset('$basePath/darkmode/moon.png'),
+            //   inactiveThumbImage: Image.asset('$basePath/darkmode/sun.png'),
+            //   activeThumbColor: Colors.transparent,
+            //   inactiveThumbColor: Colors.transparent,
+            // ).pOnly(left: 20),
           ),
           const Height(10),
           getLanguageOption(context),
@@ -132,10 +152,7 @@ class _MenuDrawerState extends State<MenuDrawer> {
                       height: 30,
                       width: 100,
                       padding: const EdgeInsets.only(left: 15),
-                      child: '© 2023. Bansook Nam. all rights reserved.'
-                          .selectableText
-                          .size(10)
-                          .makeWithDefaultFont()),
+                      child: '© 2023. Bansook Nam. all rights reserved.'.selectableText.size(10).makeWithDefaultFont()),
                   onTap: () async {},
                 ),
               ),
@@ -146,9 +163,9 @@ class _MenuDrawerState extends State<MenuDrawer> {
     );
   }
 
-  void toggleTheme() {
-    ThemeUtil.toggleTheme(context);
-  }
+  // void toggleTheme() {
+  //   ThemeUtil.toggleTheme(context);
+  // }
 
   void closeDrawer(BuildContext context) {
     if (Scaffold.of(context).isDrawerOpen) {
@@ -181,6 +198,8 @@ class _MenuDrawerState extends State<MenuDrawer> {
                           return;
                         }
                         await context.setLocale(Language.find(value.toLowerCase()).locale);
+                        //locale 이 안 바껴서 억지로 한거 하..
+                        WidgetsBinding.instance.performReassemble();
                       },
                       value: describeEnum(currentLanguage).capitalizeFirst,
                       underline: const SizedBox.shrink(),
@@ -247,11 +266,7 @@ class _MenuWidget extends StatelessWidget {
           child: Row(
             children: [
               Expanded(
-                  child: text.text
-                      .textStyle(defaultFontStyle())
-                      .color(context.appColors.drawerText)
-                      .size(15)
-                      .make()),
+                  child: text.text.textStyle(defaultFontStyle()).color(context.appColors.drawerText).size(15).make()),
             ],
           ),
         ),

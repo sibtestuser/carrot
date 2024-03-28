@@ -1,104 +1,87 @@
 import 'package:fast_app_base/common/common.dart';
-import 'package:fast_app_base/common/widget/round_button_theme.dart';
-import 'package:fast_app_base/common/widget/w_round_button.dart';
-import 'package:fast_app_base/screen/dialog/d_message.dart';
+import 'package:fast_app_base/entity/dummies.dart';
+import 'package:fast_app_base/screen/main/fab/riverpod_floating_button.dart';
+import 'package:fast_app_base/screen/main/fab/w_floating_daangn_button.dart';
+import 'package:fast_app_base/screen/main/tab/home/provider/post_provider.dart';
+import 'package:fast_app_base/screen/main/tab/home/w_product_post_item.dart';
+import 'package:fast_app_base/screen/notification/s_notification.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../dialog/d_color_bottom.dart';
-import '../../../dialog/d_confirm.dart';
+class HomeFragment extends ConsumerStatefulWidget {
+  const HomeFragment({super.key});
 
-class HomeFragment extends StatelessWidget {
-  const HomeFragment({
-    Key? key,
-  }) : super(key: key);
+  @override
+  ConsumerState<HomeFragment> createState() => _HomeFragmentState();
+}
+
+class _HomeFragmentState extends ConsumerState<HomeFragment> {
+  final scrollController = ScrollController();
+  String title = '플러터동';
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    scrollController.addListener(() {
+      final floatingState = ref.read(floatingButtonProvider);
+
+      if (scrollController.position.pixels > 100 && !floatingState.isSmall) {
+        ref.read(floatingButtonProvider.notifier).onScrollDown();
+      } else if (scrollController.position.pixels < 100 && floatingState.isSmall) {
+        ref.read(floatingButtonProvider.notifier).onScrollUp();
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      color: context.appColors.seedColor.getMaterialColorValues[100],
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Row(
-            children: [
-              IconButton(
-                onPressed: () => openDrawer(context),
-                icon: const Icon(Icons.menu),
-              )
-            ],
+    final postList = ref.watch(postProvider);
+    return Column(
+      children: [
+        AppBar(
+          automaticallyImplyLeading: false,
+          title: PopupMenuButton<String>(
+            onSelected: (value) {
+              setState(() {
+                title = value;
+              });
+            },
+            itemBuilder: (context) {
+              return ['다트동', '앱동']
+                  .map((e) => PopupMenuItem(
+                        value: e,
+                        child: Text(e),
+                      ))
+                  .toList();
+            },
+            child: Text(title),
           ),
-          const EmptyExpanded(),
-          RoundButton(
-            text: 'Snackbar 보이기',
-            onTap: () => showSnackbar(context),
-            theme: RoundButtonTheme.blue,
+          actions: [
+            IconButton(
+              onPressed: () {
+                Nav.push(NotificationScreen());
+              },
+              icon: Icon(Icons.notifications_none_rounded),
+            ),
+          ],
+        ),
+        Expanded(
+          child: ListView.separated(
+            padding: const EdgeInsets.only(bottom: FloatingDaangnButton.height),
+            itemBuilder: (context, index) {
+              return ProductPostItem(post: postList[index]);
+            },
+            separatorBuilder: (context, index) {
+              return const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 15),
+                child: Line(),
+              );
+            },
+            controller: scrollController,
+            itemCount: postList.length,
           ),
-          const Height(20),
-          RoundButton(
-            text: 'Confirm 다이얼로그',
-            onTap: () => showConfirmDialog(context),
-            theme: RoundButtonTheme.whiteWithBlueBorder,
-          ),
-          const Height(20),
-          RoundButton(
-            text: 'Message 다이얼로그',
-            onTap: showMessageDialog,
-            theme: RoundButtonTheme.whiteWithBlueBorder,
-          ),
-          const Height(20),
-          RoundButton(
-            text: '메뉴 보기',
-            onTap: () => openDrawer(context),
-            theme: RoundButtonTheme.blink,
-          ),
-          const EmptyExpanded()
-        ],
-      ),
+        ),
+      ],
     );
-  }
-
-  void showSnackbar(BuildContext context) {
-    context.showSnackbar('snackbar 입니다.',
-        extraButton: Tap(
-          onTap: () {
-            context.showErrorSnackbar('error');
-          },
-          child: '에러 보여주기 버튼'.text.white.size(13).make().centered().pSymmetric(h: 10, v: 5),
-        ));
-  }
-
-  Future<void> showConfirmDialog(BuildContext context) async {
-    final confirmDialogResult = await ConfirmDialog(
-      '오늘 기분이 좋나요?',
-      buttonText: "네",
-      cancelButtonText: "아니오",
-    ).show();
-    debugPrint(confirmDialogResult?.isSuccess.toString());
-
-    confirmDialogResult?.runIfSuccess((data) {
-      ColorBottomSheet(
-        '❤️',
-        context: context,
-        backgroundColor: Colors.yellow.shade200,
-      ).show();
-    });
-
-    confirmDialogResult?.runIfFailure((data) {
-      ColorBottomSheet(
-        '❤️힘내여',
-        backgroundColor: Colors.yellow.shade300,
-        textColor: Colors.redAccent,
-      ).show();
-    });
-  }
-
-  Future<void> showMessageDialog() async {
-    final result = await MessageDialog("안녕하세요").show();
-    debugPrint(result.toString());
-  }
-
-  void openDrawer(BuildContext context) {
-    Scaffold.of(context).openDrawer();
   }
 }

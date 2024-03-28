@@ -34,6 +34,8 @@ abstract class AbstractThemeColors {
 
   Color get text => AppColors.darkGrey;
 
+  Color get bottomText => Colors.white;
+
   Color get hintText => AppColors.middleGrey;
 
   Color get focusedBorder => AppColors.darkGrey;
@@ -45,4 +47,10 @@ abstract class AbstractThemeColors {
   Color get snackbarBgColor => AppColors.mediumBlue;
 
   Color get blueButtonBackground => AppColors.darkBlue;
+
+  Color get floatingActionLayer => const Color.fromARGB(255, 37, 37, 39);
+
+  Color get lessImportantColor => const Color.fromARGB(255, 117, 117, 117);
+
+  Color get unreadColor => const Color.fromARGB(255, 57, 57, 57);
 }
